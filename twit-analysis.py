@@ -11,7 +11,7 @@ langs = {'ar': 'Arabic', 'bg': 'Bulgarian', 'ca': 'Catalan', 'cs': 'Czech', 'da'
          'vi': 'Vietnamese', 'zh_CN': 'Chinese (simplified)', 'zh_TW': 'Chinese (traditional)'}
 
 
-class listener(StreamListener):
+class Listener(StreamListener):
     # Add counter to code to make stream stop. Cannot add to on_data since always new call.
     # Add during init instead, so avail. each time on_data() called.
     def __init__(self, num_tweets_to_grab, retweet_count=8000):
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         print(trend['name'])
 
     # Init the counter by creating instance with specific # tweets to grab
-    twitter_stream = Stream(auth, twitter_listener(num_tweets_to_grab=5))
+    twitter_stream = Stream(auth, Listener(num_tweets_to_grab=5))
     try:
         twitter_stream.sample()
     except Exception as e:
