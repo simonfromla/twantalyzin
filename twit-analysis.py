@@ -1,5 +1,18 @@
-import tweepy
+import json
 from local_config import *
+import tweepy
+from tweepy.streaming import StreamListener
+from tweepy import Stream
+
+
+class listener(StreamListener):
+    def on_data(self, data):
+        j = json.loads(data)
+        print(j["text"])
+        return True
+
+    def on_error(self, status):
+        print(status)
 
 
 if __name__ == "__main__":
