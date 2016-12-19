@@ -1,5 +1,7 @@
-import json
+from collections import Counter
 from local_config import *
+import json
+import pdb
 import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
@@ -14,9 +16,10 @@ langs = {'ar': 'Arabic', 'bg': 'Bulgarian', 'ca': 'Catalan', 'cs': 'Czech', 'da'
 class Listener(StreamListener):
     # Add counter to code to make stream stop. Cannot add to on_data since always new call.
     # Add during init instead, so avail. each time on_data() called.
-    def __init__(self, num_tweets_to_grab, retweet_count=8000):
+    def __init__(self, num_tweets_to_grab, retweet_count=500):
         self.counter = 0
         self.num_tweets_to_grab = num_tweets_to_grab
+        self.retweet_count = retweet_count
         self.languages = []
         self.top_languages = []
 
@@ -27,6 +30,7 @@ class Listener(StreamListener):
             self.languages.append(langs[json_data["lang"]])
 
             self.counter += 1
+
             # Parse the json object for retweet count
             retweet_count = json_data["retweeted_status"]["retweet_count"]
             # If the count is gt what its been initialized to(8000),
@@ -59,15 +63,15 @@ if __name__ == "__main__":
     # Search stuff
     search_results = tweepy.Cursor(twitter_api.search, q = "Tim Duncan").items(5)
     for result in search_results:
-        print(result.text)
+        print("==duncan==="+result.text)
 
     trends = twitter_api.trends_place(1)
 
     for trend in trends[0]["trends"]:
-        print(trend['name'])
+        print("===trendname==="+trend['name'])
 
     # Init the counter by creating instance with specific # tweets to grab
-    twitter_stream = Stream(auth, Listener(num_tweets_to_grab=5))
+    twitter_stream = Stream(auth, Listener(num_tweets_to_grab=10))
     try:
         twitter_stream.sample()
     except Exception as e:
