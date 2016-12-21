@@ -57,56 +57,55 @@ class Listener(StreamListener):
 
 class TwitterMain():
     def __init__(self, num_tweets_to_grab, retweet_count):
-        self.auth = tweepy.OAuthHandler(cons_tok, cons_sec)
-        self.auth.set_access_token(app_tok, app_sec)
-        self.api = tweepy.API(self.auth)
+        # self.auth = tweepy.OAuthHandler(cons_tok, cons_sec)
+        # self.auth.set_access_token(app_tok, app_sec)
+        # self.api = tweepy.API(self.auth)
+
+        self.auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
+        self.api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+        if(not self.api):
+            print("cant authenticate")
+            sys.exit(-1)
 
         self.num_tweets_to_grab = num_tweets_to_grab
         self.retweet_count = retweet_count
 
     def get_trends(self):
-        trends = self.api.trends_place(1)
+        trends = self.api.trends_place(23424960)
         trend_data = []
 
         for trend in trends[0]['trends']:
             trend_samples = []
             trend_samples.append(trend['name'])
-            tweet_samples = tweepy.Cursor(self.api.search, q = trend['name'], lang = 'th').items(2)
+            tweet_samples = tweepy.Cursor(self.api.search, q = trend['name'], lang = 'th').items(1)
             for tweet in tweet_samples:
                 trend_samples.append(tweet.text)
-            # print(tuple(trend_samples))
+                # print(tweet.text)
             trend_data.append(tuple(trend_samples))
             # print(trend_data)
 
         print(trend_data)
 
-
+    def get_data_stream(self):
+        # Init the counter by creating instance with specific # tweets to grab
+        data_stream = Stream(self.auth, Listener(num_tweets_to_grab=self.num_tweets_to_grab, retweet_count=self.retweet_count))
+        try:
+            data_stream.sample()
+        except Exception as e:
+            print(e.__doc__)
 
 if __name__ == "__main__":
+        #user auth
     # auth = tweepy.OAuthHandler(cons_tok, cons_sec)
     # auth.set_access_token(app_tok, app_sec)
     # twitter_api = tweepy.API(auth)
-
-    auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-    if(not api):
-        print("cant authenticate")
-        sys.exit(-1)
-
-
-    analyze = TwitterMain(num_tweets_to_grab=50, retweet_count=5000)
+        #app auth
+    # auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
+    # api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    # if(not api):
+    #     print("cant authenticate")
+    #     sys.exit(-1)
+    num_tweets_to_grab = 50
+    retweet_count = 10000
+    analyze = TwitterMain(num_tweets_to_grab, retweet_count)
     analyze.get_trends()
-
-
-    # Search stuff
-    # search_results = tweepy.Cursor(twitter_api.search, q = "Tim Duncan").items(5)
-    # for result in search_results:
-    #     print("==duncan==="+result.text)
-
-
-    # # Init the counter by creating instance with specific # tweets to grab
-    # twitter_stream = Stream(auth, Listener(num_tweets_to_grab=50))
-    # try:
-    #     twitter_stream.sample()
-    # except Exception as e:
-    #     print(e.__doc__)
