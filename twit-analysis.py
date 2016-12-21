@@ -57,15 +57,17 @@ class Listener(StreamListener):
 
 class TwitterMain():
     def __init__(self, num_tweets_to_grab, retweet_count):
-        # self.auth = tweepy.OAuthHandler(cons_tok, cons_sec)
-        # self.auth.set_access_token(app_tok, app_sec)
-        # self.api = tweepy.API(self.auth)
+            # access token auth
+        self.auth = tweepy.OAuthHandler(cons_tok, cons_sec)
+        self.auth.set_access_token(app_tok, app_sec)
+        self.api = tweepy.API(self.auth)
 
-        self.auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
-        self.api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-        if(not self.api):
-            print("cant authenticate")
-            sys.exit(-1)
+            #Cannot grab streaming data with App Only Auth
+        # self.auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
+        # self.api = tweepy.API(self.auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+        # if(not self.api):
+        #     print("cant authenticate")
+        #     sys.exit(-1)
 
         self.num_tweets_to_grab = num_tweets_to_grab
         self.retweet_count = retweet_count
@@ -95,17 +97,18 @@ class TwitterMain():
             print(e.__doc__)
 
 if __name__ == "__main__":
-        #user auth
+        # access token auth
     # auth = tweepy.OAuthHandler(cons_tok, cons_sec)
     # auth.set_access_token(app_tok, app_sec)
     # twitter_api = tweepy.API(auth)
-        #app auth
+        #app only auth
     # auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
     # api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
     # if(not api):
     #     print("cant authenticate")
     #     sys.exit(-1)
-    num_tweets_to_grab = 50
-    retweet_count = 10000
+    num_tweets_to_grab = 100
+    retweet_count = 5000
     analyze = TwitterMain(num_tweets_to_grab, retweet_count)
-    analyze.get_trends()
+    # analyze.get_trends()
+    analyze.get_data_stream()
