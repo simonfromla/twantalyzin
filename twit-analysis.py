@@ -2,6 +2,7 @@ from collections import Counter
 from local_config import *
 import json
 import pdb
+import sys
 import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
@@ -54,25 +55,58 @@ class Listener(StreamListener):
     def on_error(self, status):
         print(status)
 
+class TwitterMain():
+    def __init__(self, num_tweets_to_grab, retweet_count):
+        self.auth = tweepy.OAuthHandler(cons_tok, cons_sec)
+        self.auth.set_access_token(app_tok, app_sec)
+        self.api = tweepy.API(self.auth)
+
+        self.num_tweets_to_grab = num_tweets_to_grab
+        self.retweet_count = retweet_count
+
+    def get_trends(self):
+        trends = self.api.trends_place(1)
+        trend_data = []
+
+        for trend in trends[0]['trends']:
+            trend_samples = []
+            trend_samples.append(trend['name'])
+            tweet_samples = tweepy.Cursor(self.api.search, q = trend['name'], lang = 'th').items(2)
+            for tweet in tweet_samples:
+                trend_samples.append(tweet.text)
+            # print(tuple(trend_samples))
+            trend_data.append(tuple(trend_samples))
+            # print(trend_data)
+
+        print(trend_data)
+
+
 
 if __name__ == "__main__":
-    auth = tweepy.OAuthHandler(cons_tok, cons_sec)
-    auth.set_access_token(app_tok, app_sec)
-    twitter_api = tweepy.API(auth)
+    # auth = tweepy.OAuthHandler(cons_tok, cons_sec)
+    # auth.set_access_token(app_tok, app_sec)
+    # twitter_api = tweepy.API(auth)
+
+    auth = tweepy.AppAuthHandler(cons_tok, cons_sec)
+    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    if(not api):
+        print("cant authenticate")
+        sys.exit(-1)
+
+
+    analyze = TwitterMain(num_tweets_to_grab=50, retweet_count=5000)
+    analyze.get_trends()
+
 
     # Search stuff
-    search_results = tweepy.Cursor(twitter_api.search, q = "Tim Duncan").items(5)
-    for result in search_results:
-        print("==duncan==="+result.text)
+    # search_results = tweepy.Cursor(twitter_api.search, q = "Tim Duncan").items(5)
+    # for result in search_results:
+    #     print("==duncan==="+result.text)
 
-    trends = twitter_api.trends_place(1)
 
-    for trend in trends[0]["trends"]:
-        print("===trendname==="+trend['name'])
-
-    # Init the counter by creating instance with specific # tweets to grab
-    twitter_stream = Stream(auth, Listener(num_tweets_to_grab=10))
-    try:
-        twitter_stream.sample()
-    except Exception as e:
-        print(e.__doc__)
+    # # Init the counter by creating instance with specific # tweets to grab
+    # twitter_stream = Stream(auth, Listener(num_tweets_to_grab=50))
+    # try:
+    #     twitter_stream.sample()
+    # except Exception as e:
+    #     print(e.__doc__)
