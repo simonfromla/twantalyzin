@@ -1,8 +1,11 @@
 from collections import Counter
+import dataset
 from local_config import *
 import json
 import pdb
+import settings
 import sys
+from textblob import TextBlob
 import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
@@ -14,6 +17,8 @@ langs = {'ar': 'Arabic', 'bg': 'Bulgarian', 'ca': 'Catalan', 'cs': 'Czech', 'da'
          'vi': 'Vietnamese', 'zh_CN': 'Chinese (simplified)', 'zh_TW': 'Chinese (traditional)'}
 
 
+
+
 class Listener(StreamListener):
     # Add counter to code to make stream stop. Cannot add to on_data since always new call.
     # Add during init instead, so avail. each time on_data() called.
@@ -22,17 +27,44 @@ class Listener(StreamListener):
         self.num_tweets_to_grab = num_tweets_to_grab
         self.languages = []
 
+
     def on_data(self, data):
         #try/except bc if find unfriendly tweet json object, skip
         try:
             json_data = json.loads(data)
-            # if json_data["retweeted"]:
-            #     return
+
+            # retweets = json_data["retweeted_status"]["retweet_count"]
+            # print(json_data["retweeted_status"]["retweet_count"])
+            if not json_data['retweeted'] and 'RT @' not in json_data['text']:
+                # print(json_data["text"])
 
 
-            self.languages.append(langs[json_data["lang"]])
+                description = json_data["user"]["description"]
+                loc = json_data["user"]["location"]
+                text = json_data["text"]
 
-            self.counter += 1
+                coords = json_data["coordinates"]
+                name = json_data["user"]["screen_name"]
+                user_created = json_data["user"]["created_at"]
+                followers = json_data["user"]["followers_count"]
+                id_str = json_data["id_str"]
+                created = json_data["created_at"]
+                # retweets = json_data["retweeted_status"]["retweet_count"]
+                # print(json_data["retweeted_status"])
+                bg_color = json_data["user"]["profile_background_color"]
+                blob = TextBlob(text)
+                sentiment = blob.sentiment
+                polarity = sentiment.polarity
+                subjectivity = sentiment.subjectivity
+                # print(sentiment.polarity)
+
+                if coords is not None:
+                    coords = json.dumps(coords)
+
+
+                self.languages.append(langs[json_data["lang"]])
+
+                self.counter += 1
 
             # Parse the json object for retweet count
             # retweet_count = json_data["retweeted_status"]["retweet_count"]
@@ -41,15 +73,39 @@ class Listener(StreamListener):
 
             # If the count is gt what its been initialized to(8000),
             #print tweet text, count, lang, and save the top lang
-            print(json_data["text"], langs[json_data["lang"]])
+                print(json_data["text"], langs[json_data["lang"]])
 
-            # These happen at function exit
-            if self.counter >= self.num_tweets_to_grab:
-                print(self.languages)
-                print(Counter(self.languages))
-                return False
 
-            return True
+                # These happen at function exit
+                if self.counter >= self.num_tweets_to_grab:
+                    print(self.languages)
+                    print(Counter(self.languages))
+                    return False
+
+                # return True
+
+                table = db[settings.TABLE_NAME]
+
+                try:
+                    table.insert(dict(
+                    user_description=description,
+                    user_location=loc,
+                    coordinates=coords,
+                    text=text,
+                    user_name=name,
+                    user_created=user_created,
+                    user_followers=followers,
+                    id_str=id_str,
+                    created=created,
+                    user_bg_color=bg_color,
+                    polarity=polarity,
+                    subjectivity=subjectivity,
+                ))
+                except ProgrammingError as err:
+                    print(err)
+
+                return True
+
         except:
             pass
 
@@ -93,7 +149,7 @@ class TwitterMain():
         data_stream = Stream(self.auth, Listener(num_tweets_to_grab=self.num_tweets_to_grab))
         try:
             # data_stream.filter(follow=["BBCBreaking"])
-            data_stream.filter(track=["NBA"])
+            data_stream.filter(track=settings.TRACK_TERMS)
             # data_stream.sample()
         except Exception as e:
             print(e.__doc__)
@@ -109,9 +165,9 @@ if __name__ == "__main__":
     # if(not api):
     #     print("cant authenticate")
     #     sys.exit(-1)
-    num_tweets_to_grab = 100
+    num_tweets_to_grab = 10
     # retweet_count = 500
-
+    db = dataset.connect(settings.CONNECTION_STRING)
     analyze = TwitterMain(num_tweets_to_grab)
     # analyze.get_trends()
     analyze.get_data_stream()
