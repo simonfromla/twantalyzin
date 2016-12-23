@@ -17,7 +17,7 @@ langs = {'ar': 'Arabic', 'bg': 'Bulgarian', 'ca': 'Catalan', 'cs': 'Czech', 'da'
 class Listener(StreamListener):
     # Add counter to code to make stream stop. Cannot add to on_data since always new call.
     # Add during init instead, so avail. each time on_data() called.
-    def __init__(self, num_tweets_to_grab, retweet_count=500):
+    def __init__(self, num_tweets_to_grab, retweet_count):
         self.counter = 0
         self.num_tweets_to_grab = num_tweets_to_grab
         self.retweet_count = retweet_count
@@ -28,12 +28,19 @@ class Listener(StreamListener):
         #try/except bc if find unfriendly tweet json object, skip
         try:
             json_data = json.loads(data)
+            # if json_data["retweeted"]:
+            #     print(json_data["text"])
+
+
             self.languages.append(langs[json_data["lang"]])
 
             self.counter += 1
 
             # Parse the json object for retweet count
-            retweet_count = json_data["retweeted_status"]["retweet_count"]
+            # retweet_count = json_data["retweeted_status"]["retweet_count"]
+            retweet_count = json_data["retweet_count"]
+
+
             # If the count is gt what its been initialized to(8000),
             #print tweet text, count, lang, and save the top lang
             if retweet_count >= self.retweet_count:
@@ -79,7 +86,7 @@ class TwitterMain():
         for trend in trends[0]['trends']:
             trend_samples = []
             trend_samples.append(trend['name'])
-            tweet_samples = tweepy.Cursor(self.api.search, q = trend['name'], lang = 'th').items(1)
+            tweet_samples = tweepy.Cursor(self.api.search, q = trend['name'], lang = 'en').items(1)
             for tweet in tweet_samples:
                 trend_samples.append(tweet.text)
                 # print(tweet.text)
@@ -92,7 +99,8 @@ class TwitterMain():
         # Init the counter by creating instance with specific # tweets to grab
         data_stream = Stream(self.auth, Listener(num_tweets_to_grab=self.num_tweets_to_grab, retweet_count=self.retweet_count))
         try:
-            data_stream.sample()
+            data_stream.filter(follow=["BBCBreaking"])
+            # data_stream.sample()
         except Exception as e:
             print(e.__doc__)
 
@@ -108,7 +116,9 @@ if __name__ == "__main__":
     #     print("cant authenticate")
     #     sys.exit(-1)
     num_tweets_to_grab = 100
-    retweet_count = 5000
-    analyze = TwitterMain(num_tweets_to_grab, retweet_count)
+    # retweet_count = 500
+
+    # analyze = TwitterMain(num_tweets_to_grab, retweet_count)
+    analyze = TwitterMain(num_tweets_to_grab)
     # analyze.get_trends()
     analyze.get_data_stream()
