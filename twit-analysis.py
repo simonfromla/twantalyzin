@@ -34,29 +34,21 @@ class Listener(StreamListener):
             json_data = json.loads(data)
 
             # retweets = json_data["retweeted_status"]["retweet_count"]
-            # print(json_data["retweeted_status"]["retweet_count"])
             if not json_data['retweeted'] and 'RT @' not in json_data['text']:
-                # print(json_data["text"])
-
-
                 description = json_data["user"]["description"]
                 loc = json_data["user"]["location"]
                 text = json_data["text"]
-
                 coords = json_data["coordinates"]
                 name = json_data["user"]["screen_name"]
                 user_created = json_data["user"]["created_at"]
                 followers = json_data["user"]["followers_count"]
                 id_str = json_data["id_str"]
                 created = json_data["created_at"]
-                # retweets = json_data["retweeted_status"]["retweet_count"]
-                # print(json_data["retweeted_status"])
                 bg_color = json_data["user"]["profile_background_color"]
                 blob = TextBlob(text)
                 sentiment = blob.sentiment
                 polarity = sentiment.polarity
                 subjectivity = sentiment.subjectivity
-                # print(sentiment.polarity)
 
                 if coords is not None:
                     coords = json.dumps(coords)
@@ -148,7 +140,6 @@ class TwitterMain():
         # Init the counter by creating instance with specific # tweets to grab
         data_stream = Stream(self.auth, Listener(num_tweets_to_grab=self.num_tweets_to_grab))
         try:
-            # data_stream.filter(follow=["BBCBreaking"])
             data_stream.filter(track=settings.TRACK_TERMS or None, follow=settings.TRACK_USER_ID or None)
             # data_stream.sample()
         except Exception as e:
@@ -165,8 +156,9 @@ if __name__ == "__main__":
     # if(not api):
     #     print("cant authenticate")
     #     sys.exit(-1)
+
     num_tweets_to_grab = settings.NUM_TWEETS_TO_GRAB
-    # retweet_count = 500
+    # retweet_count = settings.RETWEET_COUNT
     db = dataset.connect(settings.CONNECTION_STRING)
     analyze = TwitterMain(num_tweets_to_grab)
     # analyze.get_trends()
