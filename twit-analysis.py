@@ -149,7 +149,7 @@ class TwitterMain():
         data_stream = Stream(self.auth, Listener(num_tweets_to_grab=self.num_tweets_to_grab))
         try:
             # data_stream.filter(follow=["BBCBreaking"])
-            data_stream.filter(track=settings.TRACK_TERMS)
+            data_stream.filter(track=settings.TRACK_TERMS or None, follow=settings.TRACK_USER_ID or None)
             # data_stream.sample()
         except Exception as e:
             print(e.__doc__)
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     # if(not api):
     #     print("cant authenticate")
     #     sys.exit(-1)
-    num_tweets_to_grab = 10
+    num_tweets_to_grab = settings.NUM_TWEETS_TO_GRAB
     # retweet_count = 500
     db = dataset.connect(settings.CONNECTION_STRING)
     analyze = TwitterMain(num_tweets_to_grab)
